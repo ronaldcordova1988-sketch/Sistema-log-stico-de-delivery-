@@ -1,0 +1,158 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===== FUNCIONES HELPER =====
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isActiveEmployee() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isActive == true;
+    }
+    
+    function isLiquidated(data) {
+      return data.liquidado == true;
+    }
+    
+    // ===== USUARIOS =====
+    match /users/{userId} {
+      allow create: if isAdmin();
+      allow read: if isOwner(userId) || isAdmin();
+      allow update: if isAdmin() || (isOwner(userId) && 
+                                     request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+    
+    // ===== INGRESOS (CARRERAS) =====
+    match /ingresos/{ingresoId} {
+      allow create: if isActiveEmployee() && 
+                       request.resource.data.empleadoId == request.auth.uid &&
+                       request.resource.data.liquidado == false;
+      
+      allow read: if isOwner(resource.data.empleadoId) || isAdmin();
+      
+      // Solo se puede actualizar si NO está liquidado
+      allow update: if !isLiquidated(resource.data) && 
+                       isOwner(resource.data.empleadoId) &&
+                       request.resource.data.empleadoId == resource.data.empleadoId &&
+                       request.resource.data.liquidado == resource.data.liquidado;
+      
+      // Solo se puede eliminar si NO está liquidado
+      allow delete: if !isLiquidated(resource.data) && 
+                       isOwner(resource.data.empleadoId);
+    }
+    
+    // ===== GASTOS COMBUSTIBLE =====
+    match /gastos_combustible/{gastoId} {
+      allow create: if isActiveEmployee() && 
+                       request.resource.data.empleadoId == request.auth.uid &&
+                       request.resource.data.liquidado == false;
+      
+      allow read: if isOwner(resource.data.empleadoId) || isAdmin();
+      
+      allow update: if !isLiquidated(resource.data) && 
+                       isOwner(resource.data.empleadoId) &&
+                       request.resource.data.liquidado == resource.data.liquidado;
+      
+      allow delete: if !isLiquidated(resource.data) && 
+                       isOwner(resource.data.empleadoId);
+    }
+    
+    // ===== MANTENIMIENTO ACEITE =====
+    match /mantenimiento_aceite/{mantenimientoId} {
+      allow create: if isActiveEmployee() && 
+                       request.resource.data.empleadoId == request.auth.uid &&
+                       request.resource.data.liquidado == false;
+      
+      allow read: if isOwner(resource.data.empleadoId) || isAdmin();
+      
+      allow update: if !isLiquidated(resource.data) && 
+                       isOwner(resource.data.empleadoId) &&
+                       request.resource.data.liquidado == resource.data.liquidado;
+      
+      allow delete: if !isLiquidated(resource.data) && 
+                       isOwner(resource.data.empleadoId);
+    }
+    
+    // ===== GASTOS VARIOS =====
+    match /gastos_varios/{gastoId} {
+      allow create: if isActiveEmployee() && 
+                       request.resource.data.empleadoId == request.auth.uid &&
+                       request.resource.data.liquidado == false;
+      
+      allow read: if isOwner(resource.data.empleadoId) || isAdmin();
+      
+      allow update: if !isLiquidated(resource.data) && 
+                       isOwner(resource.data.empleadoId) &&
+                       request.resource.data.liquidado == resource.data.liquidado;
+      
+      allow delete: if !isLiquidated(resource.data) && 
+                       isOwner(resource.data.empleadoId);
+    }
+    
+    // ===== CORTES (INMUTABLES) =====
+    match /cortes/{corteId} {
+      allow create: if isAdmin();
+      allow read: if isAdmin();
+      allow update: if false;  // Los cortes NO se pueden modificar
+      allow delete: if false;  // Los cortes NO se pueden eliminar
+    }
+    
+    // ===== CLEANUP LOGS =====
+    match /cleanup_logs/{logId} {
+      allow create: if false;  // Solo el backend puede escribir
+      allow read: if isAdmin();
+      allow update: if false;
+      allow delete: if false;
+    }
+    
+    // ===== METAS DIARIAS =====
+    match /metas/{metaId} {
+      allow create, update: if isAuthenticated() && 
+                               request.resource.data.empleadoId == request.auth.uid;
+      allow read: if isOwner(resource.data.empleadoId) || isAdmin();
+      allow delete: if isOwner(resource.data.empleadoId);
+    }
+    
+    // ===== VEHÍCULOS =====
+    match /vehiculos/{vehiculoId} {
+      allow create, update, delete: if isAdmin();
+      allow read: if isAuthenticated();
+    }
+    
+    // ===== HORARIOS (CHECK-IN/OUT) =====
+    match /horarios/{horarioId} {
+      allow create, update: if isAuthenticated() && 
+                               request.resource.data.empleadoId == request.auth.uid;
+      allow read: if isOwner(resource.data.empleadoId) || isAdmin();
+      allow delete: if isOwner(resource.data.empleadoId);
+    }
+    
+    // ===== ANUNCIOS GLOBALES =====
+    match /anuncios/{anuncioId} {
+      allow create, update, delete: if isAdmin();
+      allow read: if isAuthenticated();
+    }
+    
+    // ===== CHAT MENSAJES =====
+    match /chat_messages/{messageId} {
+      allow create: if isAuthenticated();
+      allow read: if isOwner(resource.data.senderId) || 
+                     isOwner(resource.data.receiverId) || 
+                     isAdmin();
+      allow update, delete: if isOwner(resource.data.senderId);
+    }
+  }
+}
