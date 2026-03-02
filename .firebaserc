@@ -1,0 +1,16 @@
+{
+  "projects": {
+    "default": "sistema-logistico-bf6ff"
+  },
+  "targets": {
+    "basedeprecio": {
+      "hosting": {
+        "app-nueva": [
+          "sistem-logistc",
+          "sistem-logistic"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
