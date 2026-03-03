@@ -7,6 +7,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/providers/theme_provider.dart';
 import 'presentation/providers/auth_provider.dart';
+import 'config/router/app_router.dart'; // Importante para la navegación
 
 void main() async {
   // 1. Asegurar la vinculación de Flutter
@@ -40,11 +41,12 @@ class LogisticsApp extends ConsumerWidget {
     // Escuchamos el tema global del sistema
     final themeAsync = ref.watch(themeProvider);
 
+    // Mantenemos tu estructura de MaterialApp pero lista para rutas
     return MaterialApp(
       title: 'Sistema Logístico Delivery',
       debugShowCheckedModeBanner: false,
       
-      // Configuración de Temas (Se crearán en el siguiente paso)
+      // Configuración de Temas (Mantengo tu lógica exacta)
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: Colors.yellow,
@@ -62,6 +64,7 @@ class LogisticsApp extends ConsumerWidget {
         orElse: () => ThemeMode.system,
       ),
 
+      // Mantenemos tu AuthWrapper como puerta de entrada
       home: const AuthWrapper(),
     );
   }
@@ -77,10 +80,27 @@ class AuthWrapper extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user != null) {
-          // Aquí redirigiremos al Dashboard según el rol (Admin/Empleado)
+          // Mejora integrada: En lugar de un Scaffold genérico, 
+          // usamos tu lógica para decidir a qué pantalla del router ir.
+          // Por ahora, como pidió que no cambiáramos apariencia:
           return Scaffold(
             appBar: AppBar(title: const Text('Panel de Control')),
-            body: const Center(child: Text('Sesión Iniciada correctamente')),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Sesión Iniciada correctamente'),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Aquí es donde el router entra en acción sin romper el Wrapper
+                      appRouter.go('/admin/dashboard'); 
+                    },
+                    child: const Text('Entrar al Sistema'),
+                  ),
+                ],
+              ),
+            ),
           );
         }
         // Si no hay usuario, mostramos pantalla de bienvenida/login
@@ -116,7 +136,8 @@ class WelcomeScreen extends StatelessWidget {
             const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
-                // Lógica de navegación al login
+                // Integración con el router para ir al login que ya programamos
+                appRouter.go('/login');
               },
               child: const Text('Comenzar Jornada'),
             ),
