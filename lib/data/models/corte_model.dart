@@ -1,49 +1,38 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class CorteModel {
   final String id;
-  final DateTime fechaCorte;
-  final DateTime fechaInicio;
-  final DateTime fechaFin;
-  final double totalIngresos;
-  final double totalGastos;
-  final double balanceGlobal;
-  final List<String> empleadosIds;
+  final String empleadoId;
+  final double montoTotal;
+  final double montoEntregado;
+  final double diferencia;
+  final DateTime fecha;
 
   CorteModel({
     required this.id,
-    required this.fechaCorte,
-    required this.fechaInicio,
-    required this.fechaFin,
-    required this.totalIngresos,
-    required this.totalGastos,
-    required this.balanceGlobal,
-    required this.empleadosIds,
+    required this.empleadoId,
+    required this.montoTotal,
+    required this.montoEntregado,
+    required this.diferencia,
+    required this.fecha,
   });
 
-  factory CorteModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory CorteModel.fromJson(Map<String, dynamic> json, String id) {
     return CorteModel(
-      id: doc.id,
-      fechaCorte: (data['fechaCorte'] as Timestamp).toDate(),
-      fechaInicio: (data['fechaInicio'] as Timestamp).toDate(),
-      fechaFin: (data['fechaFin'] as Timestamp).toDate(),
-      totalIngresos: (data['totalIngresos'] as num).toDouble(),
-      totalGastos: (data['totalGastos'] as num).toDouble(),
-      balanceGlobal: (data['balanceGlobal'] as num).toDouble(),
-      empleadosIds: List<String>.from(data['empleadosIds']),
+      id: id,
+      empleadoId: json['empleadoId'] ?? '',
+      montoTotal: (json['montoTotal'] ?? 0.0).toDouble(),
+      montoEntregado: (json['montoEntregado'] ?? 0.0).toDouble(),
+      diferencia: (json['diferencia'] ?? 0.0).toDouble(),
+      fecha: json['fecha'] != null ? DateTime.parse(json['fecha']) : DateTime.now(),
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
-      'fechaCorte': Timestamp.fromDate(fechaCorte),
-      'fechaInicio': Timestamp.fromDate(fechaInicio),
-      'fechaFin': Timestamp.fromDate(fechaFin),
-      'totalIngresos': totalIngresos,
-      'totalGastos': totalGastos,
-      'balanceGlobal': balanceGlobal,
-      'empleadosIds': empleadosIds,
+      'empleadoId': empleadoId,
+      'montoTotal': montoTotal,
+      'montoEntregado': montoEntregado,
+      'diferencia': diferencia,
+      'fecha': fecha.toIso8601String(),
     };
   }
 }

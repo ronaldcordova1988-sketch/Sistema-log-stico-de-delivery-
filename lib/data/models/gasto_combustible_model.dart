@@ -1,66 +1,38 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class GastoCombustibleModel {
   final String id;
   final String empleadoId;
-  final DateTime fecha;
+  final String vehiculoId;
   final double monto;
   final double kilometraje;
-  final bool liquidado;
-  final String? corteId;
-  final bool syncedToServer;
+  final DateTime fecha;
 
   GastoCombustibleModel({
     required this.id,
     required this.empleadoId,
-    required this.fecha,
+    required this.vehiculoId,
     required this.monto,
     required this.kilometraje,
-    this.liquidado = false,
-    this.corteId,
-    this.syncedToServer = false,
+    required this.fecha,
   });
 
-  factory GastoCombustibleModel.create({
-    required String empleadoId,
-    required double monto,
-    required double kilometraje,
-  }) {
+  factory GastoCombustibleModel.fromJson(Map<String, dynamic> json, String id) {
     return GastoCombustibleModel(
-      id: '',
-      empleadoId: empleadoId,
-      fecha: DateTime.now(),
-      monto: monto,
-      kilometraje: kilometraje,
-      liquidado: false,
-      syncedToServer: false,
+      id: id,
+      empleadoId: json['empleadoId'] ?? '',
+      vehiculoId: json['vehiculoId'] ?? '',
+      monto: (json['monto'] ?? 0.0).toDouble(),
+      kilometraje: (json['kilometraje'] ?? 0.0).toDouble(),
+      fecha: json['fecha'] != null ? DateTime.parse(json['fecha']) : DateTime.now(),
     );
   }
 
-  factory GastoCombustibleModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return GastoCombustibleModel(
-      id: doc.id,
-      empleadoId: data['empleadoId'],
-      fecha: (data['fecha'] as Timestamp).toDate(),
-      monto: (data['monto'] as num).toDouble(),
-      kilometraje: (data['kilometraje'] as num).toDouble(),
-      liquidado: data['liquidado'] ?? false,
-      corteId: data['corteId'],
-      syncedToServer: true,
-    );
-  }
-
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
       'empleadoId': empleadoId,
-      'fecha': Timestamp.fromDate(fecha),
+      'vehiculoId': vehiculoId,
       'monto': monto,
       'kilometraje': kilometraje,
-      'liquidado': liquidado,
-      'corteId': corteId,
+      'fecha': fecha.toIso8601String(),
     };
   }
-
-  bool get puedeEditar => !liquidado;
 }
