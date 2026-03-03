@@ -17,9 +17,6 @@ class UsuarioEntity {
     required this.fechaRegistro,
   });
 
-  // Regla de negocio: ¿El usuario es administrador?
   bool get isAdmin => rol == 'admin';
-
-  // Regla de negocio: ¿Tiene deudas pendientes?
   bool get tieneDeuda => saldoPendiente > 0;
 }
