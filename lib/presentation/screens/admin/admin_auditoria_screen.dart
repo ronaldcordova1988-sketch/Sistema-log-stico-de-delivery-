@@ -8,7 +8,6 @@ class AdminAuditoriaScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Escuchamos los logs del sistema (asumiendo que dataProvider gestiona una colección de logs)
     final auditoriaAsync = ref.watch(dataProvider);
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm:ss');
 
@@ -18,9 +17,7 @@ class AdminAuditoriaScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              // Futuro: Filtrar por fecha o por usuario
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -32,8 +29,6 @@ class AdminAuditoriaScreen extends ConsumerWidget {
             );
           }
 
-          // Ordenamos por fecha, lo más reciente primero
-          // (Simulado: en un caso real usaríamos una colección específica de logs)
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: eventos.length,
@@ -46,11 +41,9 @@ class AdminAuditoriaScreen extends ConsumerWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Indicador visual del tipo de acción
                     _buildActionIndicator(evento.liquidado),
                     const SizedBox(width: 15),
                     
-                    // Contenido del Log
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,8 +59,9 @@ class AdminAuditoriaScreen extends ConsumerWidget {
                                   color: Colors.blueGrey,
                                 ),
                               ),
+                              // AJUSTE: .timestamp -> .fecha
                               Text(
-                                dateFormat.format(evento.timestamp),
+                                dateFormat.format(evento.fecha),
                                 style: const TextStyle(fontSize: 11, color: Colors.grey),
                               ),
                             ],

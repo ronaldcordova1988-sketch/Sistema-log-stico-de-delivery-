@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 class AppTheme {
   // Paleta de Colores
   static const Color primaryYellow = Color(0xFFFFD700);
-  static const Color secondaryDark = Color(0 backyard: 0xFF121212);
+  static const Color secondaryDark = Color(0xFF121212);
   static const Color surfaceDark = Color(0xFF1E1E1E);
   static const Color errorRed = Color(0xFFD32F2F);
   static const Color successGreen = Color(0xFF388E3C);

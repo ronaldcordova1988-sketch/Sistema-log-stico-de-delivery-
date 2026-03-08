@@ -18,9 +18,6 @@ class AdminFlotaScreen extends ConsumerWidget {
       ),
       body: mantenimientosAsync.when(
         data: (datos) {
-          // Nota: En una fase avanzada, filtrarías por los últimos registros de cada vehículo
-          // Por ahora, listamos los mantenimientos registrados para auditoría
-          
           if (datos.isEmpty) {
             return const Center(
               child: Text('No hay registros de flota aún.'),
@@ -31,10 +28,8 @@ class AdminFlotaScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             itemCount: datos.length,
             itemBuilder: (context, index) {
-              // Asumimos que los datos contienen información de kilometraje
-              // lógica: kmProximoCambio - kmActual = kmRestantes
               final registro = datos[index];
-              final double kmRestantes = 5000; // Ejemplo estático hasta conectar lógica real de resta
+              final double kmRestantes = 5000; // Ejemplo estático
 
               return Card(
                 elevation: 3,
@@ -48,8 +43,9 @@ class AdminFlotaScreen extends ConsumerWidget {
                         color: kmRestantes < 500 ? Colors.red : Colors.green,
                         size: 35,
                       ),
-                      title: Text('Vehículo ID: ${registro.empleadoId}'), // O ID del vehículo
-                      subtitle: Text('Último cambio: ${DateFormat('dd/MM/yyyy').format(registro.timestamp)}'),
+                      title: Text('Vehículo ID: ${registro.empleadoId}'), 
+                      // AJUSTE: .timestamp -> .fecha
+                      subtitle: Text('Último cambio: ${DateFormat('dd/MM/yyyy').format(registro.fecha)}'),
                       trailing: const Icon(Icons.more_vert),
                     ),
                     Padding(
@@ -68,9 +64,8 @@ class AdminFlotaScreen extends ConsumerWidget {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          // Barra de progreso visual para el aceite
                           LinearProgressIndicator(
-                            value: 0.8, // Ejemplo: 80% de vida útil consumida
+                            value: 0.8, 
                             backgroundColor: Colors.grey[300],
                             color: kmRestantes < 500 ? Colors.red : Colors.blue,
                             minHeight: 8,
@@ -96,9 +91,7 @@ class AdminFlotaScreen extends ConsumerWidget {
         error: (e, s) => Center(child: Text('Error al cargar flota: $e')),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // Acción para añadir vehículo nuevo o programar revisión
-        },
+        onPressed: () {},
         label: const Text('Programar Revisión'),
         icon: const Icon(Icons.calendar_today),
         backgroundColor: Colors.blueAccent,

@@ -19,10 +19,10 @@ class AdminAlertasScreen extends ConsumerWidget {
       ),
       body: ingresosAsync.when(
         data: (datos) {
-          // Lógica de detección: Carreras de más de 24h sin liquidar
+          // AJUSTE: .timestamp -> .fecha
           final alertasGraves = datos.where((i) => 
             !i.liquidado && 
-            DateTime.now().difference(i.timestamp).inHours > 24
+            DateTime.now().difference(i.fecha).inHours > 24
           ).toList();
 
           if (datos.isEmpty) {
@@ -40,16 +40,15 @@ class AdminAlertasScreen extends ConsumerWidget {
               ),
               const Divider(),
               
-              // Si hay alertas graves, las listamos primero
               ...alertasGraves.map((alerta) => _buildAlertaCard(
                 context,
                 title: 'Retraso en Liquidación',
-                subtitle: 'Empleado: ${alerta.empleadoId}\nDesde: ${formatter.format(alerta.timestamp)}',
+                // AJUSTE: .timestamp -> .fecha
+                subtitle: 'Empleado: ${alerta.empleadoId}\nDesde: ${formatter.format(alerta.fecha)}',
                 monto: alerta.monto,
                 isUrgent: true,
               )),
 
-              // Simulación de alerta de combustible (se conectará con lógica de gastos)
               _buildAlertaCard(
                 context,
                 title: 'Consumo Inusual de Combustible',

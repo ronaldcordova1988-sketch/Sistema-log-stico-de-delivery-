@@ -27,6 +27,7 @@ class _AdminCortesScreenState extends ConsumerState<AdminCortesScreen> {
       body: ingresosAsync.when(
         data: (ingresos) {
           // Filtramos solo lo que NO ha sido liquidado (dinero en calle)
+          // Ajustado para manejar la lista de IngresoModel correctamente
           final pendientes = ingresos.where((i) => !i.liquidado).toList();
 
           if (pendientes.isEmpty) {
@@ -141,7 +142,8 @@ class _AdminCortesScreenState extends ConsumerState<AdminCortesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Empleado: ${ingreso.empleadoId}'),
-            Text(dateFormat.format(ingreso.timestamp), style: const TextStyle(fontSize: 11)),
+            // Corregido: .timestamp a .fecha
+            Text(dateFormat.format(ingreso.fecha), style: const TextStyle(fontSize: 11)),
           ],
         ),
         trailing: Column(
