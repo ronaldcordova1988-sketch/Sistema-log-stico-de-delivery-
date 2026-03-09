@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../providers/data_provider.dart';
+import 'detalle_servicio_screen.dart';
 
 class AdminAlertasScreen extends ConsumerWidget {
   const AdminAlertasScreen({super.key});
@@ -47,6 +48,12 @@ class AdminAlertasScreen extends ConsumerWidget {
                 subtitle: 'Empleado: ${alerta.empleadoId}\nDesde: ${formatter.format(alerta.fecha)}',
                 monto: alerta.monto,
                 isUrgent: true,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => DetalleServicioScreen(servicio: alerta)),
+                  );
+                },
               )),
 
               _buildAlertaCard(
@@ -112,6 +119,7 @@ class AdminAlertasScreen extends ConsumerWidget {
     required String subtitle,
     required double monto,
     required bool isUrgent,
+    VoidCallback? onTap,
   }) {
     return Card(
       elevation: isUrgent ? 4 : 1,
@@ -121,6 +129,7 @@ class AdminAlertasScreen extends ConsumerWidget {
         side: isUrgent ? const BorderSide(color: Colors.red, width: 1) : BorderSide.none,
       ),
       child: ListTile(
+        onTap: onTap,
         leading: Icon(
           isUrgent ? Icons.error_outline : Icons.info_outline,
           color: isUrgent ? Colors.red : Colors.orange,

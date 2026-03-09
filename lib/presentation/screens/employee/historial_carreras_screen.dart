@@ -1,126 +1,145 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../data/models/ingreso_model.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/data_provider.dart';
+import 'package:sistema_logistico_delivery/domain/entities/servicio_entity.dart';
+import 'package:sistema_logistico_delivery/presentation/providers/data_provider.dart';
+import 'package:sistema_logistico_delivery/presentation/screens/admin/detalle_servicio_screen.dart';
 
-class HistorialCarrerasScreen extends ConsumerWidget {
+class HistorialCarrerasScreen extends ConsumerStatefulWidget {
   const HistorialCarrerasScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
-    final user = authState.value;
-    
-    // Obtenemos el flujo de ingresos filtrado por el empleado actual
-    final ingresosAsync = ref.watch(dataProvider);
+  ConsumerState<HistorialCarrerasScreen> createState() => _HistorialCarrerasScreenState();
+}
+
+class _HistorialCarrerasScreenState extends ConsumerState<HistorialCarrerasScreen> {
+  DateTime? _fechaInicio;
+  DateTime? _fechaFin;
+
+  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+    final initialDate = DateTime.now();
+    final newDate = await showDatePicker(
+      context: context,
+      initialDate: isStartDate ? (_fechaInicio ?? initialDate) : (_fechaFin ?? initialDate),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      helpText: isStartDate ? 'SELECCIONAR FECHA INICIAL' : 'SELECCIONAR FECHA FINAL',
+    );
+
+    if (newDate != null) {
+      setState(() {
+        if (isStartDate) {
+          _fechaInicio = newDate;
+        } else {
+          // Ajustar la fecha final para que incluya todo el día
+          _fechaFin = DateTime(newDate.year, newDate.month, newDate.day, 23, 59, 59);
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final historialAsync = ref.watch(historialEmpleadoProvider);
+    final formatter = DateFormat('dd/MM/yyyy');
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mi Historial de Trabajo'),
+        title: const Text('Mi Historial de Servicios'),
       ),
-      body: ingresosAsync.when(
-        data: (ingresos) {
-          // Filtramos solo los ingresos del empleado logueado
-          final misIngresos = ingresos.where((i) => i.empleadoId == user?.uid).toList();
-          
-          // Ordenamos por fecha (más reciente primero)
-          misIngresos.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      body: Column(
+        children: [
+          _buildFiltroFechas(context, formatter),
+          Expanded(
+            child: historialAsync.when(
+              data: (servicios) {
+                final serviciosFiltrados = servicios.where((s) {
+                  final despuesDeInicio = _fechaInicio == null || s.fecha.isAfter(_fechaInicio!);
+                  final antesDeFin = _fechaFin == null || s.fecha.isBefore(_fechaFin!);
+                  return despuesDeInicio && antesDeFin;
+                }).toList();
 
-          if (misIngresos.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.history_toggle_off, size: 80, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('Aún no tienes registros hoy', style: TextStyle(color: Colors.grey)),
-                ],
-              ),
-            );
-          }
+                if (serviciosFiltrados.isEmpty) {
+                  return const Center(
+                    child: Text('No hay servicios en el rango de fechas seleccionado.'),
+                  );
+                }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: misIngresos.length,
-            itemBuilder: (context, index) {
-              final ingreso = misIngresos[index];
-              return _buildCarreraCard(context, ingreso);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, stack) => Center(child: Text('❌ Error al cargar historial: $e')),
-      ),
-    );
-  }
-
-  Widget _buildCarreraCard(BuildContext context, IngresoModel ingreso) {
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
-    final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: _getTipoColor(ingreso.tipo).withOpacity(0.2),
-          child: Icon(_getTipoIcon(ingreso.tipo), color: _getTipoColor(ingreso.tipo)),
-        ),
-        title: Text(
-          '${ingreso.puntoA} ➔ ${ingreso.puntoB}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(dateFormat.format(ingreso.timestamp)),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: ingreso.liquidado ? Colors.green.withOpacity(0.1) : Colors.amber.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                ingreso.liquidado ? 'LIQUIDADO' : 'PENDIENTE',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: ingreso.liquidado ? Colors.green : Colors.orange[800],
-                ),
-              ),
+                return ListView.builder(
+                  itemCount: serviciosFiltrados.length,
+                  itemBuilder: (context, index) {
+                    final servicio = serviciosFiltrados[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: servicio.liquidado ? Colors.green.shade100 : Colors.orange.shade100,
+                          child: Icon(
+                            servicio.liquidado ? Icons.check_circle_outline : Icons.pending_outlined,
+                            color: servicio.liquidado ? Colors.green : Colors.orange,
+                          ),
+                        ),
+                        title: Text('De: ${servicio.puntoA} a ${servicio.puntoB}'),
+                        subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(servicio.fecha)),
+                        trailing: Text(
+                          '\$${servicio.monto.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: servicio.liquidado ? Colors.green : Colors.orange.shade800,
+                          ),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => DetalleServicioScreen(servicio: servicio)),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, s) => Center(child: Text('Error al cargar historial: $e')),
             ),
-          ],
-        ),
-        trailing: Text(
-          currencyFormat.format(ingreso.monto),
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.green,
           ),
-        ),
+        ],
       ),
     );
   }
 
-  IconData _getTipoIcon(TipoIngreso tipo) {
-    switch (tipo) {
-      case TipoIngreso.carrera: return Icons.directions_car;
-      case TipoIngreso.delivery: return Icons.delivery_dining;
-      case TipoIngreso.transporte: return Icons.local_shipping;
-    }
-  }
-
-  Color _getTipoColor(TipoIngreso tipo) {
-    switch (tipo) {
-      case TipoIngreso.carrera: return Colors.amber;
-      case TipoIngreso.delivery: return Colors.blue;
-      case TipoIngreso.transporte: return Colors.purple;
-    }
+  Widget _buildFiltroFechas(BuildContext context, DateFormat formatter) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => _selectDate(context, true),
+              icon: const Icon(Icons.calendar_today_outlined, size: 16),
+              label: Text(_fechaInicio == null ? 'Desde' : formatter.format(_fechaInicio!)),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => _selectDate(context, false),
+              icon: const Icon(Icons.event, size: 16),
+              label: Text(_fechaFin == null ? 'Hasta' : formatter.format(_fechaFin!)),
+            ),
+          ),
+          if (_fechaInicio != null || _fechaFin != null)
+            IconButton(
+              icon: const Icon(Icons.clear, color: Colors.redAccent),
+              tooltip: 'Limpiar filtros',
+              onPressed: () => setState(() {
+                _fechaInicio = null;
+                _fechaFin = null;
+              }),
+            )
+        ],
+      ),
+    );
   }
 }

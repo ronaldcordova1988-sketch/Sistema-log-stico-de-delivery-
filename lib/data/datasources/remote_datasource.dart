@@ -26,6 +26,20 @@ class RemoteDataSource {
     });
   }
 
+  Future<List<IngresoModel>> obtenerTodosLosIngresos() async {
+    final snapshot = await _firestore.collection('ingresos').orderBy('fecha', descending: true).get();
+    return snapshot.docs.map((doc) => IngresoModel.fromJson(doc.data(), doc.id)).toList();
+  }
+
+  Future<List<IngresoModel>> obtenerIngresosPorEmpleado(String empleadoId) async {
+    final snapshot = await _firestore
+        .collection('ingresos')
+        .where('empleadoId', isEqualTo: empleadoId)
+        .orderBy('fecha', descending: true)
+        .get();
+    return snapshot.docs.map((doc) => IngresoModel.fromJson(doc.data(), doc.id)).toList();
+  }
+
   // --- GESTIÓN DE GASTOS Y MANTENIMIENTO ---
   Future<void> registrarGastoCombustible(GastoCombustibleModel gasto) async {
     await _firestore.collection('gastos_combustible').add(gasto.toJson());
@@ -63,5 +77,25 @@ class RemoteDataSource {
     });
 
     await batch.commit();
+  }
+
+  Future<void> liquidarIngresoIndividual(String id) async {
+    final docRef = _firestore.collection('ingresos').doc(id);
+
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) return;
+
+      final data = snapshot.data() as Map<String, dynamic>;
+      if (data['liquidado'] == true) return; // Evitar doble descuento
+
+      final double monto = (data['monto'] ?? 0).toDouble();
+      final String empleadoId = data['empleadoId'];
+
+      transaction.update(docRef, {'liquidado': true});
+      transaction.update(_firestore.collection('usuarios').doc(empleadoId), {
+        'saldoPendiente': FieldValue.increment(-monto)
+      });
+    });
   }
 }

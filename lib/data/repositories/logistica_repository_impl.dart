@@ -1,7 +1,7 @@
-import '../../domain/entities/servicio_entity.dart';
-import '../../domain/repositories/logistica_repository.dart';
-import '../datasources/remote_datasource.dart';
-import '../models/ingreso_model.dart';
+import 'package:sistema_logistico_delivery/domain/entities/servicio_entity.dart';
+import 'package:sistema_logistico_delivery/domain/repositories/logistica_repository.dart';
+import 'package:sistema_logistico_delivery/data/datasources/remote_datasource.dart';
+import 'package:sistema_logistico_delivery/data/models/ingreso_model.dart';
 
 class LogisticaRepositoryImpl implements LogisticaRepository {
   final RemoteDataSource remoteDataSource;
@@ -26,20 +26,16 @@ class LogisticaRepositoryImpl implements LogisticaRepository {
 
   @override
   Future<List<ServicioEntity>> obtenerTodosLosServicios() async {
-    // Aquí el DataSource nos devolvería la lista de Firestore
-    // Por ahora conectamos la firma del método
-    return []; 
+    return await remoteDataSource.obtenerTodosLosIngresos();
   }
 
   @override
   Future<void> liquidarServicio(String servicioId) async {
-    // Lógica para marcar como cobrado en la base de datos
-    return await remoteDataSource.liquidarServiciosEmpleado(servicioId);
+    return await remoteDataSource.liquidarIngresoIndividual(servicioId);
   }
 
   @override
   Future<List<ServicioEntity>> obtenerServiciosPorEmpleado(String empleadoId) async {
-    // Filtrado de servicios para el historial del trabajador
-    return [];
+    return await remoteDataSource.obtenerIngresosPorEmpleado(empleadoId);
   }
 }
