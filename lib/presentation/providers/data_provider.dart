@@ -56,5 +56,5 @@ final historialEmpleadoProvider = FutureProvider<List<ServicioEntity>>((ref) asy
 
   // Llama al repositorio para obtener los servicios de ese empleado
   final repository = ref.watch(logisticaRepositoryProvider);
-  return repository.obtenerServiciosPorEmpleado(user.uid);
+  return repository.obtenerServiciosPorEmpleado(user.id);
 });
