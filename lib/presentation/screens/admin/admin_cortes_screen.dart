@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../data/models/ingreso_model.dart';
+import '../../../domain/entities/servicio_entity.dart';
 import '../../providers/data_provider.dart';
 
 class AdminCortesScreen extends ConsumerStatefulWidget {
@@ -27,7 +27,7 @@ class _AdminCortesScreenState extends ConsumerState<AdminCortesScreen> {
       body: ingresosAsync.when(
         data: (ingresos) {
           // Filtramos solo lo que NO ha sido liquidado (dinero en calle)
-          // Ajustado para manejar la lista de IngresoModel correctamente
+          // Ajustado para manejar la lista de ServicioEntity correctamente
           final pendientes = ingresos.where((i) => !i.liquidado).toList();
 
           if (pendientes.isEmpty) {
@@ -78,7 +78,7 @@ class _AdminCortesScreenState extends ConsumerState<AdminCortesScreen> {
     );
   }
 
-  Widget _buildResumenHeader(List<IngresoModel> pendientes) {
+  Widget _buildResumenHeader(List<ServicioEntity> pendientes) {
     final total = pendientes.fold(0.0, (sum, i) => sum + i.monto);
     return Container(
       width: double.infinity,
@@ -120,7 +120,7 @@ class _AdminCortesScreenState extends ConsumerState<AdminCortesScreen> {
     );
   }
 
-  Widget _buildItemLiquidacion(IngresoModel ingreso) {
+  Widget _buildItemLiquidacion(ServicioEntity ingreso) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
@@ -175,7 +175,7 @@ class _AdminCortesScreenState extends ConsumerState<AdminCortesScreen> {
     );
   }
 
-  Future<void> _confirmarLiquidacion(IngresoModel ingreso) async {
+  Future<void> _confirmarLiquidacion(ServicioEntity ingreso) async {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(

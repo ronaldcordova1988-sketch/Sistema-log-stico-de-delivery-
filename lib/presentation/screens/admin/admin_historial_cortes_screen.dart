@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../data/models/ingreso_model.dart';
+import '../../../domain/entities/servicio_entity.dart';
 import '../../providers/data_provider.dart';
 
 class AdminHistorialCortesScreen extends ConsumerWidget {
@@ -23,7 +23,7 @@ class AdminHistorialCortesScreen extends ConsumerWidget {
           final historial = ingresos.where((i) => i.liquidado).toList();
           
           // Ordenamos por fecha descendente (lo más reciente arriba)
-          historial.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          historial.sort((a, b) => b.fecha.compareTo(a.fecha));
 
           if (historial.isEmpty) {
             return const Center(
@@ -61,7 +61,7 @@ class AdminHistorialCortesScreen extends ConsumerWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
-                    'Empleado ID: ${corte.empleadoId}\nFecha: ${dateFormat.format(corte.timestamp)}',
+                    'Empleado ID: ${corte.empleadoId}\nFecha: ${dateFormat.format(corte.fecha)}',
                     style: const TextStyle(fontSize: 12),
                   ),
                   trailing: Text(
