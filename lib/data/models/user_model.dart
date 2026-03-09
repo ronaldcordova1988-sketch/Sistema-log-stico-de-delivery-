@@ -1,4 +1,4 @@
-import '../../domain/entities/usuario_entity.dart';
+import 'package:sistema_logistico_delivery/domain/entities/usuario_entity.dart';
 
 class UserModel extends UsuarioEntity {
   UserModel({
@@ -10,6 +10,10 @@ class UserModel extends UsuarioEntity {
     super.vehiculoId,
     required super.fechaRegistro,
   });
+
+  // Getters para compatibilidad con nombres estándar de Firebase
+  String get uid => id;
+  String get displayName => nombre;
 
   // De Firebase a la App
   factory UserModel.fromJson(Map<String, dynamic> json, String id) {
