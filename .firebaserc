@@ -10,6 +10,13 @@
           "sistem-logistic"
         ]
       }
+    },
+    "sistema-logistico-bf6ff": {
+      "hosting": {
+        "app-nueva": [
+          "sistema-logistico-bf6ff"
+        ]
+      }
     }
   },
   "etags": {}
