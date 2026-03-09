@@ -1,65 +1,69 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sistema_logistico_delivery/data/datasources/remote_datasource.dart';
+import 'package:sistema_logistico_delivery/data/models/user_model.dart';
+import 'package:sistema_logistico_delivery/data/repositories/logistica_repository_impl.dart';
+import 'package:sistema_logistico_delivery/domain/repositories/logistica_repository.dart';
+
+// DEPENDENCIAS DE DATOS (Movidas aquí para romper dependencias circulares)
+final remoteDataSourceProvider = Provider((ref) => RemoteDataSource());
+
+final logisticaRepositoryProvider = Provider<LogisticaRepository>((ref) {
+  final dataSource = ref.watch(remoteDataSourceProvider);
+  return LogisticaRepositoryImpl(dataSource);
+});
 
 /// Proveedor de Estado para la Autenticación de Firebase
 /// 
 /// Escucha los cambios en el estado de la sesión (Login/Logout)
-/// y busca el rol del usuario en Firestore.
-class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+/// y busca el perfil completo del usuario (UserModel) en Firestore.
+class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
+  final fb_auth.FirebaseAuth _auth = fb_auth.FirebaseAuth.instance;
+  final Ref _ref;
 
-  AuthNotifier() : super(const AsyncValue.loading()) {
+  AuthNotifier(this._ref) : super(const AsyncValue.loading()) {
     _init();
   }
 
   /// Inicializa la escucha del estado de autenticación
   void _init() {
-    _auth.authStateChanges().listen((User? user) {
-      state = AsyncValue.data(user);
+    _auth.authStateChanges().listen((fb_auth.User? firebaseUser) async {
+      if (firebaseUser == null) {
+        state = const AsyncValue.data(null);
+        return;
+      }
+      try {
+        // Al detectar un usuario de Firebase, buscamos nuestro modelo de datos personalizado
+        final userModel = await _ref.read(remoteDataSourceProvider).getUsuario(firebaseUser.uid);
+        state = AsyncValue.data(userModel);
+      } catch (e, stack) {
+        state = AsyncValue.error(e, stack);
+      }
     }, onError: (e, stack) {
       state = AsyncValue.error(e, stack);
     });
   }
 
-  /// Cerrar Sesión con limpieza de seguridad
   Future<void> signOut() async {
-    state = const AsyncValue.loading();
     try {
       await _auth.signOut();
+      // El listener de authStateChanges se encargará de actualizar el estado a null.
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
-    }
-  }
-
-  /// Obtener el Rol del Usuario (Admin o Empleado) desde Firestore
-  Future<String> getUserRole(String uid) async {
-    try {
-      final doc = await _db.collection('usuarios').doc(uid).get();
-      if (doc.exists) {
-        return doc.data()?['rol'] ?? 'empleado';
-      }
-      return 'empleado';
-    } catch (e) {
-      return 'empleado';
     }
   }
 }
 
 /// Provider global de Autenticación
-final authProvider = StateNotifierProvider<AuthNotifier, AsyncValue<User?>>((ref) {
-  return AuthNotifier();
+final authProvider = StateNotifierProvider<AuthNotifier, AsyncValue<UserModel?>>((ref) {
+  return AuthNotifier(ref);
 });
 
 /// Provider auxiliar para verificar si el usuario es Administrador
-final isAdminProvider = FutureProvider<bool>((ref) async {
+final isAdminProvider = Provider<bool>((ref) {
   final authState = ref.watch(authProvider);
-  final user = authState.value;
-  
-  if (user == null) return false;
-  
-  final notifier = ref.read(authProvider.notifier);
-  final rol = await notifier.getUserRole(user.uid);
-  return rol == 'admin';
+  return authState.maybeWhen(
+    data: (user) => user?.rol == 'admin',
+    orElse: () => false,
+  );
 });

@@ -75,32 +75,25 @@ class AuthWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Escuchamos el proveedor de isAdmin para reaccionar a cambios de rol
+    final esAdmin = ref.watch(isAdminProvider);
     final authState = ref.watch(authProvider);
 
     return authState.when(
       data: (user) {
         if (user != null) {
-          // Mejora integrada: En lugar de un Scaffold genérico, 
-          // usamos tu lógica para decidir a qué pantalla del router ir.
-          // Por ahora, como pidió que no cambiáramos apariencia:
-          return Scaffold(
-            appBar: AppBar(title: const Text('Panel de Control')),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Sesión Iniciada correctamente'),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Aquí es donde el router entra en acción sin romper el Wrapper
-                      appRouter.go('/admin/dashboard'); 
-                    },
-                    child: const Text('Entrar al Sistema'),
-                  ),
-                ],
-              ),
-            ),
+          // Redirección automática basada en el rol del usuario
+          // Usamos un frame de espera para asegurar que el router esté listo
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (esAdmin) {
+              appRouter.go('/admin/dashboard');
+            } else {
+              appRouter.go('/employee/home');
+            }
+          });
+          // Mientras se redirige, mostramos un loader para evitar parpadeos
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
           );
         }
         // Si no hay usuario, mostramos pantalla de bienvenida/login

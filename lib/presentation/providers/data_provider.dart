@@ -1,18 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sistema_logistico_delivery/data/datasources/remote_datasource.dart';
-import 'package:sistema_logistico_delivery/data/repositories/logistica_repository_impl.dart';
 import 'package:sistema_logistico_delivery/domain/entities/servicio_entity.dart';
 import 'package:sistema_logistico_delivery/domain/repositories/logistica_repository.dart';
 import 'package:sistema_logistico_delivery/presentation/providers/auth_provider.dart';
-
-// 1. Proveedor del DataSource (El motor)
-final remoteDataSourceProvider = Provider((ref) => RemoteDataSource());
-
-// 2. Proveedor del Repositorio (El puente)
-final logisticaRepositoryProvider = Provider<LogisticaRepository>((ref) {
-  final dataSource = ref.watch(remoteDataSourceProvider);
-  return LogisticaRepositoryImpl(dataSource);
-});
 
 // 3. StateNotifier para manejar los datos en tiempo real en las pantallas
 final dataProvider = StateNotifierProvider<DataNotifier, AsyncValue<List<ServicioEntity>>>((ref) {
@@ -64,7 +53,7 @@ final historialEmpleadoProvider = FutureProvider<List<ServicioEntity>>((ref) asy
   // Obtiene el usuario actual del authProvider
   final user = ref.watch(authProvider).value;
   if (user == null) return [];
-  
+
   // Llama al repositorio para obtener los servicios de ese empleado
   final repository = ref.watch(logisticaRepositoryProvider);
   return repository.obtenerServiciosPorEmpleado(user.uid);
