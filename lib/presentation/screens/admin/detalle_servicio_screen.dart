@@ -85,10 +85,11 @@ class DetalleServicioScreen extends ConsumerWidget {
                       dense: true,
                     ),
                     Container(
-                      margin: const EdgeInsets.only(left: 7),
-                      height: 20,
-                      border: const Border(left: BorderSide(color: Colors.grey, width: 1)),
-                    ),
+  decoration: BoxDecoration(
+    border: Border(left: BorderSide(color: Colors.grey, width: 1)),
+  ),
+  child: const SizedBox(height: 20), // O el hijo que tenga
+),
                     ListTile(
                       leading: const Icon(Icons.location_on, color: Colors.red, size: 16),
                       title: const Text('Destino'),

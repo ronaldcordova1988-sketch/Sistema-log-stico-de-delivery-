@@ -1,44 +1,29 @@
-import 'package:sistema_logistico_delivery/domain/entities/usuario_entity.dart';
+class UserModel {
+  final String id;
+  final String nombre;
+  final String email;
+  final String rol;
+  final double saldoPendiente;
 
-class UserModel extends UsuarioEntity {
   UserModel({
-    required super.id,
-    required super.nombre,
-    required super.email,
-    required super.rol,
-    super.saldoPendiente,
-    super.vehiculoId,
-    required super.fechaRegistro,
+    required this.id,
+    required this.nombre,
+    required this.email,
+    required this.rol,
+    this.saldoPendiente = 0.0,
   });
 
-  // Getters para compatibilidad con nombres estándar de Firebase
+  // Getters para compatibilidad con código antiguo
   String get uid => id;
   String get displayName => nombre;
 
-  // De Firebase a la App
-  factory UserModel.fromJson(Map<String, dynamic> json, String id) {
+  factory UserModel.fromJson(Map<String, dynamic> json, String documentId) {
     return UserModel(
-      id: id,
-      nombre: json['nombre'] ?? '',
+      id: documentId,
+      nombre: json['nombre'] ?? json['displayName'] ?? 'Usuario',
       email: json['email'] ?? '',
-      rol: json['rol'] ?? 'empleado',
+      rol: json['rol'] ?? 'user',
       saldoPendiente: (json['saldoPendiente'] ?? 0.0).toDouble(),
-      vehiculoId: json['vehiculoId'],
-      fechaRegistro: json['fechaRegistro'] != null 
-          ? DateTime.parse(json['fechaRegistro']) 
-          : DateTime.now(),
     );
-  }
-
-  // De la App a Firebase
-  Map<String, dynamic> toJson() {
-    return {
-      'nombre': nombre,
-      'email': email,
-      'rol': rol,
-      'saldoPendiente': saldoPendiente,
-      'vehiculoId': vehiculoId,
-      'fechaRegistro': fechaRegistro.toIso8601String(),
-    };
   }
 }
